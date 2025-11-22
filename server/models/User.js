@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    userId:{
-        type:String,
-        required:true,
+    userId: {
+      type: String,
+      required: true,
     },
     username: {
       type: String,
@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    requests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    isPrivate: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

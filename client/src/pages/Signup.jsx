@@ -8,9 +8,9 @@ export default function Signup() {
     e.preventDefault();
     try {
       await axios.post("http://localhost:5000/api/auth/signup", form);
-      alert("Signup successful!");
+      console.log("Signup successful!");
     } catch (err) {
-      alert(err.response?.data?.message || "Error signing up");
+      console.log(err.response || "Error signing up");
     }
   };
 

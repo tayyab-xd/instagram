@@ -7,6 +7,8 @@ const router = express.Router();
 
 // ✅ Signup Route
 router.post("/signup", async (req, res) => {
+  console.log('singup hit');
+
   try {
     const { username, email, password } = req.body;
 
@@ -15,13 +17,16 @@ router.post("/signup", async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    const newUser = new User({ username, email, password: hashed });
+    const userId = `${Date.now()}${Math.floor(Math.random() * 1000)}`; 
+
+    const newUser = new User({ username, email, password: hashed, userId });
     await newUser.save();
 
-    res.status(201).json({ message: "User registered successfully" });
+    res.status(201).json({ message: "User registered successfully", userId });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+
 });
 
 // ✅ Login Route

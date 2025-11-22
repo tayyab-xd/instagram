@@ -1,9 +1,13 @@
 import { useState } from "react";
 import axios from "axios";
+import { useApp } from "../context/AppContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { dispatch } = useApp();
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -11,7 +15,10 @@ export default function Login() {
       const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
       localStorage.setItem("user", JSON.stringify(res.data.user));
       localStorage.setItem("token", res.data.token);
-      alert("Login successful!");
+      console.log(res.data);
+      
+      dispatch({ type: "SET_USER", payload: res.data.user });
+      navigate("/home");
     } catch (err) {
       alert(err.response?.data?.message || "Error logging in");
     }
