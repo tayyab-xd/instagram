@@ -10,6 +10,7 @@ export default function Home() {
   return (
     <div className="bg-gray-900 text-white min-h-screen">
       {showModal && <UploadPostModal onClose={()=>setShowModal(false)} />}
+
       <div className="flex max-w-7xl mx-auto px-4 gap-4">
         <div className="hidden md:flex md:flex-col w-1/4 sticky top-0 h-screen">
           <SidebarLeft />

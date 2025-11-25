@@ -2,10 +2,6 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    userId: {
-      type: String,
-      required: true,
-    },
     username: {
       type: String,
       required: true,
@@ -23,12 +19,13 @@ const userSchema = new mongoose.Schema(
     },
     profilePic: {
       type: String,
-      default: "",
+      default: "https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?semt=ais_hybrid&w=740&q=80",
     },
     bio: {
       type: String,
       default: "",
     },
+    posts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Post" }],
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     requests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],

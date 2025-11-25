@@ -17,7 +17,7 @@ const reducer = (state, action) => {
             return { ...state, loading: true, error: null };
 
         case "SET_USER":
-            console.log(action.payload);
+            // console.log(action.payload);
             return {
                 ...state,
                 user: action.payload,

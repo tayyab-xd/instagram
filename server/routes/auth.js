@@ -17,12 +17,10 @@ router.post("/signup", async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    const userId = `${Date.now()}${Math.floor(Math.random() * 1000)}`; 
-
-    const newUser = new User({ username, email, password: hashed, userId });
+    const newUser = new User({ username, email, password: hashed });
     await newUser.save();
 
-    res.status(201).json({ message: "User registered successfully", userId });
+    res.status(201).json({ message: "User registered successfully", user:newUser });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -45,10 +43,11 @@ router.post("/login", async (req, res) => {
     res.json({
       token,
       user: {
-        id: user._id,
+        _id: user._id,
         username: user.username,
         email: user.email,
         profilePic: user.profilePic,
+        isPrivate:user.isPrivate
       },
     });
   } catch (err) {
