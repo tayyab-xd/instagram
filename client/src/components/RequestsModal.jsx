@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
+import { useApp } from "../context/AppContext";
 
-const RequestsModal = ({ open, onClose, currentUser }) => {
+const RequestsModal = ({ open, onClose }) => {
   const [requests, setRequests] = useState([]);
+  const { state } = useApp();
+    const { user } = state;
 
   // Fetch all follow requests
   const fetchRequests = async () => {
     const res = await fetch(
-      `http://localhost:5000/api/users/${currentUser._id}/requests`
+      `http://localhost:5000/api/users/${user._id}/requests`
     );
     const data = await res.json();
     setRequests(data);
+    console.log(data);
+    
   };
 
   useEffect(() => {
@@ -19,7 +24,7 @@ const RequestsModal = ({ open, onClose, currentUser }) => {
   // Accept Request
   const acceptRequest = async (requesterId) => {
     await fetch(
-      `http://localhost:5000/api/users/${currentUser._id}/accept-request`,
+      `http://localhost:5000/api/users/${user._id}/accept-request`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -35,7 +40,7 @@ const RequestsModal = ({ open, onClose, currentUser }) => {
   // Reject Request
   const rejectRequest = async (requesterId) => {
     await fetch(
-      `http://localhost:5000/api/users/${currentUser._id}/reject-request`,
+      `http://localhost:5000/api/users/${user._id}/reject-request`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,7 +57,7 @@ const RequestsModal = ({ open, onClose, currentUser }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center">
-      <div className="bg-white p-5 rounded w-[350px]">
+      <div className="bg-black p-5 rounded w-[350px]">
 
         <div className="flex justify-between items-center mb-3">
           <h2 className="text-xl font-bold">Follow Requests</h2>

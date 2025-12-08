@@ -9,7 +9,7 @@ const upload = multer({ storage: multer.memoryStorage() }); // memory storage
 
 // Create Post with image/video
 router.post("/", upload.single("file"), async (req, res) => {
-
+  console.log('post upload hit');
   try {
     const { userId, caption } = req.body;
     const file = req.file;

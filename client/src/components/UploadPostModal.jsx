@@ -9,13 +9,11 @@ export default function UploadPostModal({ onClose }) {
   const {state} = useApp();
 
   const handleUpload = async () => {
-    console.log(state);
-    
     if (!file) return;
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("userId", state.user.id);
+      formData.append("userId", state.user._id);
       formData.append("caption", caption);
 
       await axios.post("http://localhost:5000/api/posts", formData, {

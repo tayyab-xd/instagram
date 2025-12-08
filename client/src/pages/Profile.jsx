@@ -3,6 +3,7 @@ import { useApp } from "../context/AppContext";
 import axios from "axios";
 import EditProfileModal from "../components/EditProfileModal";
 import SettingsModal from "../components/SettingsModal";
+import FollowListModal from "../components/FollowListModal";
 
 export default function Profile() {
     const { state } = useApp();
@@ -16,16 +17,19 @@ export default function Profile() {
     const [showSettings, setShowSettings] = useState(false);
     const [showEditProfile, setShowEditProfile] = useState(false);
 
+    // follow list modal
+    const [openFollowersModal, setOpenFollowersModal] = useState(false);
+    const [openFollowingModal, setOpenFollowingModal] = useState(false);
+
     useEffect(() => {
         // console.log(user);
         if (!user?._id) return;
-        
+
 
         const fetchProfile = async () => {
             setLoading(true);
             try {
                 const res = await axios.get(`http://localhost:5000/api/users/${user._id}`);
-                // console.log('ye data hai', res.data);
 
                 setProfileData(res.data);
             } catch (err) {
@@ -154,18 +158,30 @@ export default function Profile() {
                             </span>{" "}
                             posts
                         </div>
-                        <div>
-                            <span className="font-bold text-white">
-                                {profileData?.followers?.length || 0}
-                            </span>{" "}
-                            followers
+                        <div className="flex gap-8 mb-4 text-gray-200">
+                            <div onClick={() => setOpenFollowersModal(true)} className="cursor-pointer">
+                                <span className="font-bold text-white">{profileData?.followers?.length || 0}</span> followers
+                            </div>
+                            <div onClick={() => setOpenFollowingModal(true)} className="cursor-pointer">
+                                <span className="font-bold text-white">{profileData?.following?.length || 0}</span> following
+                            </div>
                         </div>
-                        <div>
-                            <span className="font-bold text-white">
-                                {profileData?.following?.length || 0}
-                            </span>{" "}
-                            following
-                        </div>
+                        {/* Modals */}
+                        <FollowListModal
+                            open={openFollowersModal}
+                            onClose={() => setOpenFollowersModal(false)}
+                            currentUser={user}
+                            profileUser={profileData}
+                            type="followers"
+                        />
+
+                        <FollowListModal
+                            open={openFollowingModal}
+                            onClose={() => setOpenFollowingModal(false)}
+                            currentUser={user}
+                            profileUser={profileData}
+                            type="following"
+                        />
                     </div>
 
                     <div>

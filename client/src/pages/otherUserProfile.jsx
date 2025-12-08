@@ -2,21 +2,25 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useApp } from "../context/AppContext";
+import FollowListModal from "../components/FollowListModal";
 
 const OtherUserProfile = () => {
-    const { id } = useParams(); // other user's ID
+    const { id } = useParams();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const { state } = useApp();
     const currentUser = state.user;
 
+    // follow list modal
+    const [openFollowersModal, setOpenFollowersModal] = useState(false);
+    const [openFollowingModal, setOpenFollowingModal] = useState(false);
+
     const fetchUser = async () => {
         try {
             const res = await axios.get(`http://localhost:5000/api/users/${id}/${currentUser._id}`);
             setUser(res.data);
-            setLoading(false);
             console.log(res.data);
-            console.log(currentUser._id);
+            setLoading(false);
 
         } catch (err) {
             console.log(err);
@@ -38,7 +42,8 @@ const OtherUserProfile = () => {
             } else if (res.data === "Follow request has been sent") {
                 setUser((prev) => ({
                     ...prev,
-                    requests: [...(prev.requests || []), currentUser._id]
+                    requests: [...(prev.requests || []), currentUser._id],
+                    hasRequested: true
                 }));
             }
         } catch (err) {
@@ -55,7 +60,8 @@ const OtherUserProfile = () => {
             setUser((prev) => ({
                 ...prev,
                 followers: prev.followers.filter((f) => (f._id || f).toString() !== currentUser._id),
-                requests: prev.requests ? prev.requests.filter((r) => r.toString() !== currentUser._id) : []
+                requests: prev.requests ? prev.requests.filter((r) => r.toString() !== currentUser._id) : [],
+                hasRequested: false
             }));
         } catch (err) {
             console.log(err);
@@ -74,19 +80,19 @@ const OtherUserProfile = () => {
     const isPrivate = user.isPrivate;
 
     // Check if current user is in followers list
-    const isFollower = user.followers.some(f => (f._id || f)?.toString() === currentUser._id);
+    const isFollower = user.followers?.some(f => (f._id || f)?.toString() === currentUser._id) || false;
 
     // Check if current user is in requests list
     // Requests are not populated in the backend route, so they are likely IDs
-    const isRequested = user.requests && user.requests.some(r => r === currentUser._id || r?.toString() === currentUser._id);
+    const isRequested = user.hasRequested || (user.requests && user.requests.some(r => r === currentUser._id || r?.toString() === currentUser._id));
 
     const canSeeProfile = !isPrivate || isFollower || user._id === currentUser._id;
 
     return (
-        <div className="max-w-xl mx-auto p-4">
+        <div className="bg-gray-800 max-w-xl mx-auto p-4">
 
             {/* HEADER */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 border-b border-gray-700 pb-4">
                 <img
                     src={user.profilePic || "/default.jpg"}
                     className="w-20 h-20 rounded-full object-cover"
@@ -100,15 +106,15 @@ const OtherUserProfile = () => {
                         <div className="mt-2">
                             {isFollower ? (
                                 <button onClick={unfollowUser} className="px-3 py-1 bg-gray-300 rounded">
-                                    Following 
+                                    Following
                                 </button>
                             ) : isRequested ? (
-                                <button className="px-3 py-1 bg-yellow-400 rounded">
-                                    Requested 
+                                <button onClick={unfollowUser} className="px-3 py-1 bg-yellow-400 rounded">
+                                    Requested
                                 </button>
                             ) : (
                                 <button onClick={followUser} className="px-3 py-1 bg-blue-500 text-white rounded">
-                                    Follow 
+                                    Follow
                                 </button>
                             )}
 
@@ -121,22 +127,22 @@ const OtherUserProfile = () => {
             <div className="flex justify-around mt-6 text-center">
                 <div>
                     <p className="font-bold text-lg">
-                        {canSeeProfile ? user.posts.length : "—"}
+                        {user.posts?.length}
                     </p>
                     <p className="text-sm">Posts</p>
                 </div>
 
                 <div>
-                    <p className="font-bold text-lg">
-                        {canSeeProfile ? user.followers.length : "—"}
-                    </p>
+                    <button onClick={() => setOpenFollowersModal(true)} className="font-bold text-lg">
+                        {user.followers?.length}
+                    </button>
                     <p className="text-sm">Followers</p>
                 </div>
 
                 <div>
-                    <p className="font-bold text-lg">
-                        {canSeeProfile ? user.following.length : "—"}
-                    </p>
+                    <button onClick={() => setOpenFollowingModal(true)} className="font-bold text-lg">
+                        {user.following?.length}
+                    </button>
                     <p className="text-sm">Following</p>
                 </div>
             </div>
@@ -175,6 +181,21 @@ const OtherUserProfile = () => {
                     ))}
                 </div>
             )}
+
+            {/* Follow List Modals */}
+            <FollowListModal
+                open={openFollowersModal}
+                onClose={() => setOpenFollowersModal(false)}
+                profileUser={user}
+                type="followers"
+            />
+
+            <FollowListModal
+                open={openFollowingModal}
+                onClose={() => setOpenFollowingModal(false)}
+                profileUser={user}
+                type="following"
+            />
         </div>
     );
 };

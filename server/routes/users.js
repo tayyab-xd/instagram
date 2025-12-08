@@ -37,7 +37,7 @@ router.put("/:id/follow", async (req, res) => {
         try {
             const user = await User.findById(req.params.id);
             const currentUser = await User.findById(req.body.currentUser);
-            
+
             if (!user.followers.includes(req.body.currentUser)) {
                 if (user.isPrivate) {
                     if (!user.requests.includes(req.body.currentUser)) {
@@ -56,7 +56,7 @@ router.put("/:id/follow", async (req, res) => {
             }
         } catch (err) {
             console.log(err);
-            
+
             res.status(500).json(err);
         }
     } else {
@@ -91,68 +91,68 @@ router.put("/:id/unfollow", async (req, res) => {
 
 // Accept Follow Request
 router.post("/:id/accept-request", async (req, res) => {
-  try {
-    const { requesterId } = req.body;  // user who requested
-    const user = await User.findById(req.params.id);
-    const requester = await User.findById(requesterId);
+    try {
+        const { requesterId } = req.body;
+        const user = await User.findById(req.params.id);
+        const requester = await User.findById(requesterId);
 
-    if (!user || !requester)
-      return res.status(404).json("User not found");
+        if (!user || !requester)
+            return res.status(404).json("User not found");
 
-    // remove from requests
-    user.requests = user.requests.filter(
-      (id) => id.toString() !== requesterId
-    );
+        // remove from requests
+        user.requests = user.requests.filter(
+            (id) => id.toString() !== requesterId
+        );
 
-    // add to followers
-    user.followers.push(requesterId);
+        // add to followers
+        user.followers.push(requesterId);
 
-    // add to following of requester
-    requester.following.push(user._id);
+        // add to following of requester
+        requester.following.push(user._id);
 
-    await user.save();
-    await requester.save();
+        await user.save();
+        await requester.save();
 
-    res.json("Request Accepted");
-  } catch (err) {
-    res.status(500).json("Server error");
-  }
+        res.json("Request Accepted");
+    } catch (err) {
+        res.status(500).json("Server error");
+    }
 });
 
 
 // Reject Follow Request
 router.post("/:id/reject-request", async (req, res) => {
-  try {
-    const { requesterId } = req.body;
+    try {
+        const { requesterId } = req.body;
 
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json("User not found");
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json("User not found");
 
-    user.requests = user.requests.filter(
-      (id) => id.toString() !== requesterId
-    );
+        user.requests = user.requests.filter(
+            (id) => id.toString() !== requesterId
+        );
 
-    await user.save();
+        await user.save();
 
-    res.json("Request Rejected");
-  } catch (err) {
-    res.status(500).json("Server error");
-  }
+        res.json("Request Rejected");
+    } catch (err) {
+        res.status(500).json("Server error");
+    }
 });
 
 
 // Get Follow Requests
 router.get("/:id/requests", async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id)
-      .populate("requests", "username profilePic");
+    try {
+        const user = await User.findById(req.params.id)
+            .populate("requests", "username profilePic");
 
-    if (!user) return res.status(404).json("User not found");
+        if (!user) return res.status(404).json("User not found");
 
-    res.json(user.requests);
-  } catch (err) {
-    res.status(500).json("Server error");
-  }
+        res.json(user.requests);
+    } catch (err) {
+        res.status(500).json("Server error");
+    }
 });
 
 // Update User
@@ -251,18 +251,50 @@ router.delete("/:id/profile-pic", async (req, res) => {
 // Update Privacy
 router.put("/:id/privacy", async (req, res) => {
     console.log("update privacy hit");
-    
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json("User not found");
+
+    if (user._id.toString() !== req.params.id)
+        return res.status(403).json("You can update only your account");
+
     try {
-        const updated = await User.findByIdAndUpdate(
-            req.params.id,
-            { isPrivate: req.body.isPrivate },
-            { new: true }
-        );
-        res.json(updated);
+        const { isPrivate } = req.body;
+
+        // If user is becoming public and has pending requests
+        if (isPrivate === false && user.requests.length > 0) {
+
+            // Process each requester one-by-one (NO parallel save)
+            for (const requesterId of user.requests) {
+                const requester = await User.findById(requesterId);
+                if (!requester) continue;
+
+                // Update requester
+                requester.following.push(user._id);
+                await requester.save();
+
+                // Update the main user (followers)
+                user.followers.push(requester._id);
+            }
+
+            // Clear requests at the end
+            user.requests = [];
+        }
+
+        // Update privacy
+        user.isPrivate = isPrivate;
+
+        // Single save → no parallel conflict
+        await user.save();
+
+        res.json(user);
+
     } catch (err) {
+        console.error(err);
         res.status(500).json(err);
     }
 });
+
 
 // update password
 router.put("/:id/change-password", async (req, res) => {
@@ -272,9 +304,9 @@ router.put("/:id/change-password", async (req, res) => {
 
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json("User not found");
-        
 
-        const isMatch = await bcrypt.compare(oldPass, user.password);        
+
+        const isMatch = await bcrypt.compare(oldPass, user.password);
         if (!isMatch) {
             console.log("Old password incorrect");
             return res.status(400).json("Old password incorrect");
@@ -310,7 +342,7 @@ router.get("/:id", async (req, res) => {
 // GET suggested users
 router.get("/suggested/:id", async (req, res) => {
     console.log('get suggested hit');
-    
+
     try {
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json("User not found");
@@ -323,7 +355,7 @@ router.get("/suggested/:id", async (req, res) => {
         const suggested = await User.find({
             _id: { $nin: excludeIds },
         }).limit(20);
-        
+
         res.json(suggested);
     } catch (err) {
         res.status(500).json(err);
@@ -334,37 +366,134 @@ router.get("/suggested/:id", async (req, res) => {
 router.get("/:id/:viewerId", async (req, res) => {
     console.log('get other user profile hit');
     try {
-    const user = await User.findById(req.params.id)
-      .populate("posts")
-      .populate("followers", "username profilePic")
-      .populate("following", "username profilePic");
+        const user = await User.findById(req.params.id)
+            .populate("posts")
+            .populate("followers", "username profilePic")
+            .populate("following", "username profilePic");
 
-    if (!user) return res.status(404).json("User not found");
+        if (!user) return res.status(404).json("User not found");
 
-    const viewerId = req.params.viewerId;
+        const viewerId = req.params.viewerId;
 
-    const isFollowing = user.followers.some(
-      (f) => f._id.toString() === viewerId
-    );
+        const isFollowing = user.followers.some(
+            (f) => f._id.toString() === viewerId
+        );
 
-    // If private and viewer not following → send limited profile
-    if (user.isPrivate && !isFollowing && viewerId !== user._id.toString()) {
-      return res.json({
-        _id: user._id,
-        username: user.username,
-        bio: user.bio,
-        profilePic: user.profilePic,
-        isPrivate: user.isPrivate,
-        restricted: true, 
-      });
+        const hasRequested = user.requests.some((id) => id.toString() === viewerId);
+
+        // If private and viewer not following → send limited profile
+        if (user.isPrivate && !isFollowing && viewerId !== user._id.toString()) {
+            return res.json({
+                _id: user._id,
+                username: user.username,
+                bio: user.bio,
+                profilePic: user.profilePic,
+                isPrivate: user.isPrivate,
+                restricted: true,
+                posts: user.posts,
+                followers: user.followers,
+                following: user.following,
+                hasRequested,
+            });
+        }
+
+        // Otherwise send full profile
+        res.json({ ...user.toObject(), restricted: false });
+    } catch (err) {
+        res.status(500).json(err);
     }
-
-    // Otherwise send full profile
-    res.json({ ...user.toObject(), restricted: false });
-  } catch (err) {
-    res.status(500).json(err);
-  }
 });
 
+// Get followers or following list of self
+router.get("/get-self-list/:id/:type", async (req, res) => {
+    console.log("get follow list hit");
+    try {
+        const { type } = req.params; // type = 'followers' or 'following'
+        console.log(type);
+        const user = await User.findById(req.params.id)
+            .populate("followers", "username profilePic")
+            .populate("following", "username profilePic");
+
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        if (type === "followers") return res.json(user.followers);
+        if (type === "following") return res.json(user.following);
+
+        return res.status(400).json({ message: "Invalid type" });
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
+// Get followers or following list of other
+router.get("/get-other-list/:viewerId/:profileUserId/:type", async (req, res) => {
+    console.log("get other user follow list hit");
+    try {
+        const { viewerId, profileUserId, type } = req.params; // type = 'followers' or 'following'
+        console.log(type);
+        const user = await User.findById(profileUserId)
+            .populate("followers", "username profilePic")
+            .populate("following", "username profilePic");
+
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        if (type === "followers") return res.json(user.followers);
+        if (type === "following") return res.json(user.following);
+
+        return res.status(400).json({ message: "Invalid type" });
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
+// Remove a follower
+router.put("/remove-follower/:id", async (req, res) => {
+    console.log("remove follower hit");
+    try {
+        const { targetUserId } = req.body;
+        console.log(req.params.id, targetUserId);
+
+        const user = await User.findById(req.params.id);
+        const target = await User.findById(targetUserId);
+
+        if (!user || !target) return res.status(404).json("User not found");
+
+        // Remove follower
+        user.followers.pull(targetUserId);
+        target.following.pull(req.params.id);
+
+        await user.save();
+        await target.save();
+        console.log(target.username, ' has been removed from', user.username);
+
+
+        res.json({ message: "Removed successfully" });
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
+// Remove following
+router.put("/remove-following/:id", async (req, res) => {
+    console.log("remove following hit");
+    try {
+        const { targetUserId } = req.body;
+
+        const user = await User.findById(req.params.id);
+        const target = await User.findById(targetUserId);
+
+        if (!user || !target) return res.status(404).json("User not found");
+
+        user.following.pull(targetUserId);
+        target.followers.pull(req.params.id);
+
+        await user.save();
+        await target.save();
+
+        res.json({ message: "Unfollowed successfully" });
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
 
 export default router;

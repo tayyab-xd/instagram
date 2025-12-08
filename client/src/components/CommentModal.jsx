@@ -54,7 +54,7 @@ export default function CommentModal({ post, onClose }) {
                                         className="w-6 h-6 rounded-full mr-2 inline-block"
                                     />
                                 )}
-                                <NavLink to={`/user/${c.user?._id}`} className="font-bold text-white mr-1 hover:underline">
+                                <NavLink to={c.user?._id === user._id ? "/profile" : `/user/${c.user?._id}`} className="font-bold text-white mr-1 hover:underline">
                                     {c.user?.username}:
                                 </NavLink>
                                 <span className="text-gray-300">{c.text}</span>

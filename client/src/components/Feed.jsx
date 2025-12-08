@@ -21,7 +21,7 @@ export default function Feed() {
       const res = await fetch(`http://localhost:5000/api/posts/feed?page=${page}&limit=5`);
       const data = await res.json();
 
-      console.log(data);
+      // console.log(data);
 
       setPosts((prev) => [...prev, ...data.posts]);
       setNextPage(data.nextPage);
@@ -86,7 +86,7 @@ const toggleLike = async (postId) => {
               src={post.user?.profilePic || "https://via.placeholder.com/40"}
               className="w-10 h-10 rounded-full"
             />
-            <NavLink to={`/user/${post.user?._id}`}><p className="font-bold text-white">{post.user?.username}</p></NavLink>
+            <NavLink to={user._id === post.user._id ? "/profile" : `/user/${post.user?._id}`}><p className="font-bold text-white">{post.user?.username}</p></NavLink>
           </div>
 
           {/* MEDIA */}
@@ -117,6 +117,8 @@ const toggleLike = async (postId) => {
           {/* LIKE COUNT */}
           <p className="text-white font-semibold mt-2">
             {post.likes?.length || 0} likes
+            <br />
+            {post.comments?.length || 0} comments
           </p>
 
           {/* CAPTION */}
