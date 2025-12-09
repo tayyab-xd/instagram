@@ -119,7 +119,6 @@ router.post("/:id/accept-request", async (req, res) => {
     }
 });
 
-
 // Reject Follow Request
 router.post("/:id/reject-request", async (req, res) => {
     try {
@@ -139,7 +138,6 @@ router.post("/:id/reject-request", async (req, res) => {
         res.status(500).json("Server error");
     }
 });
-
 
 // Get Follow Requests
 router.get("/:id/requests", async (req, res) => {
@@ -295,7 +293,6 @@ router.put("/:id/privacy", async (req, res) => {
     }
 });
 
-
 // update password
 router.put("/:id/change-password", async (req, res) => {
     console.log("change password hit");
@@ -324,12 +321,27 @@ router.put("/:id/change-password", async (req, res) => {
     }
 });
 
-
 // Get self profile
 router.get("/:id", async (req, res) => {
     console.log('get self user hit');
     try {
-        const user = await User.findById(req.params.id).populate("posts");
+        const user = await User.findById(req.params.id)
+        .populate({
+                path: "posts",
+                populate: [
+                    {
+                        path: "user",
+                        select: "username profilePic"
+                    },
+                    {
+                        path: "comments",
+                        populate: {
+                            path: "user",
+                            select: "username profilePic"
+                        }
+                    }
+                ]
+            })
         console.log('user sent', user.username);
 
         const { password, updatedAt, ...other } = user._doc;
@@ -367,9 +379,25 @@ router.get("/:id/:viewerId", async (req, res) => {
     console.log('get other user profile hit');
     try {
         const user = await User.findById(req.params.id)
-            .populate("posts")
+            .populate({
+                path: "posts",
+                populate: [
+                    {
+                        path: "user",
+                        select: "username profilePic"
+                    },
+                    {
+                        path: "comments",
+                        populate: {
+                            path: "user",
+                            select: "username profilePic"
+                        }
+                    }
+                ]
+            })
             .populate("followers", "username profilePic")
             .populate("following", "username profilePic");
+        console.log(user);
 
         if (!user) return res.status(404).json("User not found");
 

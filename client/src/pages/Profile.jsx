@@ -4,6 +4,7 @@ import axios from "axios";
 import EditProfileModal from "../components/EditProfileModal";
 import SettingsModal from "../components/SettingsModal";
 import FollowListModal from "../components/FollowListModal";
+import PostModal from "../components/PostModal";
 
 export default function Profile() {
     const { state } = useApp();
@@ -21,6 +22,9 @@ export default function Profile() {
     const [openFollowersModal, setOpenFollowersModal] = useState(false);
     const [openFollowingModal, setOpenFollowingModal] = useState(false);
 
+    //Post modal
+    const [selectedPost, setSelectedPost] = useState(null);
+
     useEffect(() => {
         // console.log(user);
         if (!user?._id) return;
@@ -30,6 +34,7 @@ export default function Profile() {
             setLoading(true);
             try {
                 const res = await axios.get(`http://localhost:5000/api/users/${user._id}`);
+                console.log('ye data hai', res.data);
 
                 setProfileData(res.data);
             } catch (err) {
@@ -201,6 +206,7 @@ export default function Profile() {
                     <div
                         key={post._id}
                         className="aspect-square relative group cursor-pointer bg-gray-900"
+                        onClick={() => setSelectedPost(post)}
                     >
                         {post.mediaType === "video" ? (
                             <video
@@ -225,6 +231,13 @@ export default function Profile() {
                     </div>
                 ))}
             </div>
+            {/* Post Modal */}
+                        {selectedPost && (
+                            <PostModal
+                                post={selectedPost}
+                                onClose={() => setSelectedPost(null)}
+                            />
+                        )}
         </div>
     );
 }

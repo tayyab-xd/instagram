@@ -3,6 +3,7 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import FollowListModal from "../components/FollowListModal";
+import PostModal from "../components/PostModal";
 
 const OtherUserProfile = () => {
     const { id } = useParams();
@@ -15,11 +16,14 @@ const OtherUserProfile = () => {
     const [openFollowersModal, setOpenFollowersModal] = useState(false);
     const [openFollowingModal, setOpenFollowingModal] = useState(false);
 
+    // post modal
+    const [selectedPost, setSelectedPost] = useState(null);
+
     const fetchUser = async () => {
         try {
             const res = await axios.get(`http://localhost:5000/api/users/${id}/${currentUser._id}`);
             setUser(res.data);
-            console.log(res.data);
+            console.log('data',res.data);
             setLoading(false);
 
         } catch (err) {
@@ -167,6 +171,7 @@ const OtherUserProfile = () => {
                         <div
                             key={post._id}
                             className="aspect-square relative bg-gray-900 group cursor-pointer"
+                            onClick={() => setSelectedPost(post)}
                         >
                             {post.mediaType === "video" ? (
                                 <video src={post.mediaUrl} className="w-full h-full object-cover" />
@@ -196,6 +201,14 @@ const OtherUserProfile = () => {
                 profileUser={user}
                 type="following"
             />
+
+            {/* Post Modal */}
+            {selectedPost && (
+                <PostModal
+                    post={selectedPost}
+                    onClose={() => setSelectedPost(null)}
+                />
+            )}
         </div>
     );
 };
